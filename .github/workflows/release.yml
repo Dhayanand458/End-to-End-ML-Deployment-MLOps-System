@@ -1,0 +1,80 @@
+name: "🚀 Release to PyPI (Trusted Publisher)"
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write   # Required for PyPI trusted publishing (OIDC)
+  attestations: write
+
+jobs:
+  build-and-publish:
+    name: "🔧 Build & Publish (PyPI)"
+    runs-on: ubuntu-latest
+
+    # Must match the environment you configured on PyPI’s Trusted Publisher
+    environment:
+      name: release
+      url: https://pypi.org/p/driftradar-vision
+
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "🐍 Set up Python 3.11"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "🧩 Upgrade pip + build deps"
+        run: |
+          python -m pip install --upgrade pip build twine
+
+      - name: "🏗️ Build package"
+        run: python -m build --sdist --wheel --outdir dist
+
+      - name: "🧪 Verify metadata"
+        run: twine check dist/*
+
+      - name: "🔒 Publish to PyPI (trusted publisher)"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Do NOT set 'password' for trusted publishing.
+          skip-existing: true
+          # repository-url: https://upload.pypi.org/legacy/   # default
+          # verify-metadata: true                              # default
+          # print-hash: true                                   # optional
+          # attestations: true                                 # optional (requires perms)
+
+      - name: "🧾 Upload build artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi-dist
+          path: dist/
+
+  tag-metadata:
+    name: "🪪 Attach metadata & badges"
+    runs-on: ubuntu-latest
+    needs: build-and-publish
+    if: ${{ github.event.release.tag_name != '' }}
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🧾 Generate release notes"
+        run: |
+          echo "## DriftRadar-Vision v${{ github.event.release.tag_name }}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "This release includes auto-retrain policies, dashboard improvements, and updated CI pipelines." >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "Full Changelog: https://github.com/${{ github.repository }}/commits/${{ github.event.release.tag_name }}" >> RELEASE_NOTES.md
+
+      - name: "📤 Upload notes as artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md

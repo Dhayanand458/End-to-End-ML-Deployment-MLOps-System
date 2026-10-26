@@ -1,0 +1,47 @@
+﻿# === Auto-retrain policy consumed by retrain.py ===
+
+thresholds:
+  drift_psi: 0.2              # renamed from psi_threshold to match retrain.py
+  confidence_drop_pct: 10.0
+  aggregate_threshold: 0.5
+  probe_accuracy_drop_pp: 2.0
+  require_drift_flag: false
+
+cooldowns:
+  retrain_days: 7
+
+data:
+  reference_fraction: 1.0
+  recent_batches: 5
+  max_samples: 20000
+
+training:
+  config_path: configs
+  config_name: model-ci.yaml
+  override:
+    epochs: 1
+    batch_size: 256
+    num_workers: 0
+    pin_memory: false
+
+mlflow:
+  tracking_uri: "file:./mlruns"
+  register_name: "driftradar-vision-resnet18"
+  stage_after_retrain: "Staging"
+
+artifacts:
+  reports_dir: "artifacts/reports/evidently"
+  ge_dir: "artifacts/reports/ge"
+  out_dir: "artifacts/summary"
+
+# New: provide outputs expected by retrain.py
+# Keep single source of truth by referencing artifacts.out_dir
+outputs:
+  summary_dir: ${artifacts.out_dir}
+
+promotion:
+  require_ge_blockers_zero: true
+  require_latency_within_pct: 10.0
+  require_size_within_pct: 10.0
+  improve_ref_acc_or_ece: true
+  reduce_drifted_drop_pct: 30.0

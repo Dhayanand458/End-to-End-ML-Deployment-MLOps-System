@@ -1,0 +1,19 @@
+docs_dir: artifacts/reports/ge
+
+blockers:
+  unreadable_pct_max: 0.5      # %
+  invalid_shape_pct_max: 0.1   # %
+  duplicate_pct_max: 1.0       # %
+
+warn:
+  class_balance_kl_max: 0.05
+  channel_mean_bounds:
+    r: [0.35, 0.6]
+    g: [0.30, 0.6]
+    b: [0.30, 0.6]
+  channel_std_bounds:
+    r: [0.18, 0.35]
+    g: [0.18, 0.35]
+    b: [0.18, 0.35]
+  brightness_bounds: [0.2, 0.8]
+  contrast_bounds: [0.2, 0.9]

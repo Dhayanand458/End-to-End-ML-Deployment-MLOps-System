@@ -1,0 +1,15 @@
+windows:
+  batches: 7
+signals:
+  psi_threshold: 0.2           # Population Stability Index
+  js_threshold: 0.1            # Jensen–Shannon distance
+  ks_pvalue_min: 0.05          # Kolmogorov–Smirnov p‑value minimum
+  embedding_pca_dims: 20
+weights:
+  features: 1.0
+  embeddings: 2.0
+policy:
+  require_any: true            # flag drift if any threshold breaches (or weighted aggregate)
+  aggregate_threshold: 0.5
+output:
+  reports_dir: artifacts/reports/evidently

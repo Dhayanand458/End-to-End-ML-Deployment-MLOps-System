@@ -1,0 +1,18 @@
+arch: resnet18          # [resnet18]
+img_size: 224
+optimizer: adamw        # [adamw, sgd]
+lr: 3.0e-4
+weight_decay: 1.0e-4
+epochs: 20
+batch_size: 128
+num_workers: 2
+label_smoothing: 0.0
+amp: false              # keep deterministic by default
+save_best: true
+export_onnx: true
+onnx_path: artifacts/runs/onnx/model.onnx
+seed: 42
+mlflow:
+  experiment: driftradar-vision
+  tracking_uri: file:./mlruns
+  register_name: driftradar-vision-resnet18

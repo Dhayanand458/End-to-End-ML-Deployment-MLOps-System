@@ -1,0 +1,70 @@
+name: retrain-smoke
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches: [ main ]
+
+jobs:
+  smoke:
+    if: contains(github.event.pull_request.labels.*.name, 'model:retrain')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: \${{ runner.os }}-pip-\${{ hashFiles('**/requirements.txt','**/pyproject.toml') }}
+          restore-keys: \${{ runner.os }}-pip-
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt || true
+          pip install -e .
+
+      - name: Smoke inference on staging ONNX (100 images)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import onnxruntime as ort, numpy as np
+          from torchvision import datasets, transforms
+          from torch.utils.data import DataLoader, Subset
+          import time
+          p = Path("artifacts/runs/onnx/staging.onnx")
+          if not p.exists():
+              p = Path("artifacts/runs/onnx/model.onnx")
+          assert p.exists(), "Missing ONNX export for staging/model"
+          sess = ort.InferenceSession(str(p), providers=["CPUExecutionProvider"])
+          tfm = transforms.Compose([transforms.Resize(224), transforms.CenterCrop(224), transforms.ToTensor()])
+          ds = datasets.CIFAR10(root="artifacts/data", train=False, transform=tfm, download=True)
+          ds = Subset(ds, range(100))
+          dl = DataLoader(ds, batch_size=32, shuffle=False)
+          t0=time.time(); n=0
+          for x,_ in dl:
+              out = sess.run(None, {"input": x.numpy()})[0]
+              n += out.shape[0]
+          dt=time.time()-t0
+          print(f"smoke_inferred={n} elapsed_sec={dt:.3f} imgs_per_sec={n/dt:.1f}")
+          assert n==100
+          PY
+
+      - name: Lightweight GE/Evidently reproducibility
+        run: |
+          python -m driftradar_vision.dq_validate --config-path configs --config-name dq.yaml
+          python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data.yaml
+
+      - name: Upload PR smoke logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrain-smoke-artifacts
+          path: |
+            artifacts/reports/evidently/_latest/*
+            artifacts/reports/ge/_latest/*

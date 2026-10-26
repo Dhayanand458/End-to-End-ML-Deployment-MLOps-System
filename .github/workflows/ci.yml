@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: \${{ runner.os }}-pip-\${{ hashFiles('**/requirements.txt','**/pyproject.toml') }}
+          restore-keys: \${{ runner.os }}-pip-
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt || true
+          pip install "great_expectations<1.0" "pandas<2.2" || true
+          pip install -e .
+
+      - name: Lint & type (best effort)
+        run: |
+          python - <<'PY'
+          import subprocess, sys
+          for cmd in [["python","-m","flake8","src"], ["python","-m","mypy","--ignore-missing-imports","src"]]:
+              try: subprocess.run(cmd, check=True)
+              except Exception: pass
+          PY
+
+      - name: Mini pipeline smoke
+        run: |
+          python -m driftradar_vision.data_ref --count 500 --seed 42
+          python -m driftradar_vision.features --config-path configs --config-name data.yaml
+          python -m driftradar_vision.dq_validate --config-path configs --config-name dq.yaml
+          python -m driftradar_vision.data_prod --batch-count 200 --split test --seed 4242 --corruptions gaussian_noise --severity 2
+          python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data.yaml
+
+      - name: Upload smoke artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-artifacts
+          path: artifacts/
+

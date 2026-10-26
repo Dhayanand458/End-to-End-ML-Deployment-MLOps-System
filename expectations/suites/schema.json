@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "id",
+          "label",
+          "mean_r",
+          "mean_g",
+          "mean_b",
+          "std_r",
+          "std_g",
+          "std_b",
+          "brightness",
+          "contrast",
+          "edge_density"
+        ]
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": { "column": "id" }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "label",
+        "min_value": 0,
+        "max_value": 9,
+        "strict_min": true,
+        "strict_max": true
+      }
+    }
+  ]
+}

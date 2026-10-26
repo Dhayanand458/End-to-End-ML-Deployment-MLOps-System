@@ -1,0 +1,105 @@
+name: drift-cron
+
+on:
+  schedule:
+    - cron: '0 */8 * * *'   # every 8 hours
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: drift-cron
+  cancel-in-progress: false
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt','**/pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt || true
+          # Keep GE API stable for dq_validate
+          pip install "great_expectations<1.0" "pandas<2.2" || true
+          pip install -e .
+
+      - name: Ingest + GE + Evidently
+        run: |
+          python -m driftradar_vision.data_prod --batch-count 2000 --split test --seed 4242 --corruptions gaussian_noise defocus_blur jpeg_compression snow brightness --severity 3
+          python -m driftradar_vision.dq_validate --config-path configs --config-name dq.yaml
+          python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data.yaml
+
+      - name: Retrain policy decision
+        id: decide
+        env:
+          DRIFTRADAR_NUM_WORKERS: "0"
+        run: |
+          python -m driftradar_vision.retrain --config-path configs --config-name policy.yaml || true
+          python - <<'PY'
+          import json, pathlib, os, sys
+          p = pathlib.Path("artifacts/summary/latest_decision.json")
+          out = {"triggered":"false","run_id":"","version":"","notes":""}
+          if p.exists():
+              d = json.loads(p.read_text())
+              out["triggered"] = str(d.get("retrain_triggered", False)).lower()
+              out["run_id"] = d.get("run_id","")
+              out["version"] = str(d.get("staging_version",""))
+              out["notes"] = d.get("reason","")
+          # Nice notice in the logs
+          print(f"::notice title=decision::{json.dumps(out)}")
+          # Expose as step outputs (GITHUB_OUTPUT)
+          gh_out = os.environ.get("GITHUB_OUTPUT")
+          if not gh_out:
+              sys.exit("GITHUB_OUTPUT not set")
+          with open(gh_out, "a", encoding="utf-8") as f:
+              for k, v in out.items():
+                  f.write(f"{k}={v}\n")
+          PY
+
+      - name: Prepare PR content
+        if: steps.decide.outputs.triggered == 'true'
+        run: |
+          BR="retrain/$(date +%Y%m%d-%H%M%S)"
+          echo "BR=$BR" >> "$GITHUB_ENV"
+          git checkout -b "$BR"
+          git add artifacts/reports/evidently artifacts/reports/ge artifacts/summary || true
+          # also stage ONNX export if retrain produced it
+          git add artifacts/runs/onnx/*.onnx 2>/dev/null || true
+          # only commit if there are changes
+          if ! git diff --cached --quiet; then
+            git commit -m "auto: retrain artifacts (run=${{ steps.decide.outputs.run_id }})"
+            git push --set-upstream origin "$BR"
+          else
+            echo "No changes to commit."
+          fi
+
+      - name: Open PR
+        if: steps.decide.outputs.triggered == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.BR }}
+          base: main
+          title: "Auto retrain: model candidate to Staging (run ${{ steps.decide.outputs.run_id }})"
+          body-path: .github/PULL_REQUEST_TEMPLATE.md
+          commit-message: "auto: retrain artifacts"
+          labels: |
+            model:retrain
+            needs-review

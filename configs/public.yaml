@@ -1,0 +1,18 @@
+cooldowns:
+  retrain_days: 7
+
+thresholds:
+  confidence_drop_pct: 10          # mean confidence drop vs reference
+  drift_psi: 0.2                   # from drift.yaml
+
+promotion:
+  require_ge_blockers: 0           # must be zero
+  require_delta_acc_min: 0.0       # minimal improvement on reference acc (or keep equal if drift mitigated)
+  max_latency_delta_pct: 10        # bound latency change in smoke
+
+mlflow:
+  tracking_uri: file:./mlruns
+  register_name: driftradar-vision/resnet18
+
+outputs:
+  summary_dir: artifacts/summary

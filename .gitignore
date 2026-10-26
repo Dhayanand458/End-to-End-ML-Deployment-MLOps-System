@@ -1,0 +1,58 @@
+# Python / venv
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dll
+*.dylib
+.env
+.venv/
+venv/
+env/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Jupyter / PyTest
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+.cache/
+.tox/
+
+# Artifacts & Reports
+artifacts/
+mlruns/
+mlartifacts/
+lightning_logs/
+checkpoints/
+output/
+logs/
+*.onnx
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+# Hydra
+multirun/
+outputs/
+logs/
+
+# Streamlit / Dash
+dashboard/__pycache__/
+dashboard/.streamlit/
+dashboard/temp/
+dashboard/artifacts/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

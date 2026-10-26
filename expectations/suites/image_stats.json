@@ -1,0 +1,12 @@
+{
+  "expectations": [
+    {
+      "type": "expect_multicolumn_sum_to_be_between",
+      "kwargs": {
+        "column_list": [ "edge_density" ],
+        "min_value": 0.0,
+        "max_value": 1000000.0
+      }
+    }
+  ]
+}

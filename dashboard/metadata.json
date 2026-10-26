@@ -1,0 +1,9 @@
+{
+  "current_production": {
+    "model_name": "driftradar-vision-resnet18",
+    "version": 1,
+    "run_id": "abc123",
+    "last_drift_score": 0.23,
+    "last_ge_blockers": 0
+  }
+}

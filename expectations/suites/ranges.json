@@ -1,0 +1,78 @@
+{
+  "expectations": [
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "mean_r",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "mean_g",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "mean_b",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "std_r",
+        "min_value": 0.0,
+        "max_value": 0.6
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "std_g",
+        "min_value": 0.0,
+        "max_value": 0.6
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "std_b",
+        "min_value": 0.0,
+        "max_value": 0.6
+      }
+    },
+
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "brightness",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "contrast",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "edge_density",
+        "min_value": 0.0,
+        "max_value": 1.0
+      }
+    }
+  ]
+}
