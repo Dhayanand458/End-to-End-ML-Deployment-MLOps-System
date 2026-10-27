@@ -1,3 +1,4 @@
+
 name: ci
 
 on:
@@ -18,12 +19,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
 
       - name: Upgrade pip
-        run: python -m pip install --upgrade pip
+        run: python -m pip install --upgrade pip setuptools wheel
 
       - name: Install project dependencies
         run: |
@@ -45,13 +48,13 @@ jobs:
       - name: Mini pipeline smoke
         timeout-minutes: 45
         env:
-          PYTHONUNBUFFERED: '1'
+          PYTHONUNBUFFERED: "1"
         run: |
           python -m driftradar_vision.data_ref --count 100 --seed 42
-          python -m driftradar_vision.features --config-path configs --config-name data.yaml
-          python -m driftradar_vision.dq_validate --config-path configs --config-name data.yaml
+          python -m driftradar_vision.features --config-path configs --config-name data-ci.yaml
+          python -m driftradar_vision.dq_validate --config-path configs --config-name dq.yaml
           python -m driftradar_vision.data_prod --batch-count 10 --split test --seed 4242 --corruptions gaussian_noise --severity 2
-          python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data.yaml
+          python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data-ci.yaml
 
       - name: Upload smoke artifacts
         if: always()

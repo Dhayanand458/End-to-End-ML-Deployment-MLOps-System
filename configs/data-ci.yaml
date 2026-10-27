@@ -1,0 +1,21 @@
+dataset: cifar10
+root_dir: artifacts/data
+reference:
+  count: 100
+  seed: 42
+  split: train
+production:
+  batch_count: 10
+  split: test
+  seed: 4242
+  corruptions: [gaussian_noise]
+  severity: 2
+  out_dir: artifacts/data/production
+features:
+  image_size: 32
+  compute_embeddings: true
+  parquet_dir: artifacts/reference/features
+embeddings:
+  backbone: resnet18
+  pca_dims: 8
+  cache_dir: artifacts/reference/embeddings

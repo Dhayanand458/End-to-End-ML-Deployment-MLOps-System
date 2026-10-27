@@ -36,10 +36,9 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install -U pip
-          pip install -r requirements.txt || true
-          # Keep GE API stable for dq_validate
-          pip install "great_expectations<1.0" "pandas<2.2" || true
-          pip install -e .
+          python -m pip install -r requirements.txt
+          python -m pip install -e . --no-deps
+          python -m pip check
 
       - name: Ingest + GE + Evidently
         run: |

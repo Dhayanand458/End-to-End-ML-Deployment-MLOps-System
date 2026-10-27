@@ -22,7 +22,7 @@ jobs:
         run: pip install mlflow
       - name: Promote latest Staging -> Production
         env:
-          PR_NUMBER: \${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
           python - <<'PY'
           import mlflow, json, pathlib
