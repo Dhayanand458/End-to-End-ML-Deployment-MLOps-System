@@ -46,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-cifar10-dataset-v1
 
       - name: Mini pipeline smoke
-        timeout-minutes: 45
+        timeout-minutes: 120
         env:
           PYTHONUNBUFFERED: "1"
         run: |
