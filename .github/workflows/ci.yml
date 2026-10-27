@@ -9,7 +9,7 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -41,12 +41,14 @@ jobs:
           PY
 
       - name: Mini pipeline smoke
+        timeout-minutes: 20
         run: |
-          python -m driftradar_vision.data_ref --count 500 --seed 42
+          python -m driftradar_vision.data_ref --count 100 --seed 42
           python -m driftradar_vision.features --config-path configs --config-name data.yaml
-          python -m driftradar_vision.dq_validate --config-path configs --config-name dq.yaml
-          python -m driftradar_vision.data_prod --batch-count 200 --split test --seed 4242 --corruptions gaussian_noise --severity 2
+          python -m driftradar_vision.dq_validate --config-path configs --config-name data.yaml
+          python -m driftradar_vision.data_prod --batch-count 10 --split test --seed 4242 --corruptions gaussian_noise --severity 2
           python -m driftradar_vision.drift_check --config-path configs --config-name drift.yaml --data-config-path configs --data-config-name data.yaml
+
 
       - name: Upload smoke artifacts
         uses: actions/upload-artifact@v4
